@@ -1,5 +1,10 @@
 package setx
 
+import (
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
+)
+
 // Set interface defines basic operations for set data structures.
 type Set[T comparable] interface {
 	// Add adds an element to the set. Returns false if it already exists, true if newly added.
@@ -40,4 +45,16 @@ type Set[T comparable] interface {
 
 	// IsSupersetOf checks if the current set is a superset of another set.
 	IsSupersetOf(other Set[T]) bool
+
+	// Find returns the first element that matches the predicate, or None if not found.
+	Find(predicate func(T) bool) option.Option[T]
+
+	// GetAny returns any element from the set, or None if the set is empty.
+	GetAny() option.Option[T]
+
+	// TryRemove attempts to remove an element and returns it, or an error if not found.
+	TryRemove(element T) result.Result[T, error]
+
+	// Filter returns a new set containing only elements that match the predicate.
+	Filter(predicate func(T) bool) Set[T]
 }

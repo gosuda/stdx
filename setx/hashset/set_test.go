@@ -64,6 +64,22 @@ func TestHashSet_IsSupersetOf(t *testing.T) {
 	testSetIsSupersetOf(t, createHashSet[int])
 }
 
+func TestHashSet_Find(t *testing.T) {
+	testSetFind(t, createHashSet[int])
+}
+
+func TestHashSet_GetAny(t *testing.T) {
+	testSetGetAny(t, createHashSet[int])
+}
+
+func TestHashSet_TryRemove(t *testing.T) {
+	testSetTryRemove(t, createHashSet[int])
+}
+
+func TestHashSet_Filter(t *testing.T) {
+	testSetFilter(t, createHashSet[int])
+}
+
 // Common test functions that can be reused for any Set implementation
 
 func testSetAdd(t *testing.T, factory func() setx.Set[int]) {
@@ -353,5 +369,109 @@ func testSetIsSupersetOf(t *testing.T, factory func() setx.Set[int]) {
 	emptySet := factory()
 	if !set1.IsSupersetOf(emptySet) {
 		t.Error("Any set should be superset of empty set")
+	}
+}
+
+// Test functions for new Option/Result-based methods
+
+func testSetFind(t *testing.T, factory func() setx.Set[int]) {
+	set := factory()
+	set.Add(1)
+	set.Add(2)
+	set.Add(3)
+	set.Add(4)
+	set.Add(5)
+
+	// Find even number
+	result := set.Find(func(x int) bool { return x%2 == 0 })
+	if result.IsNone() {
+		t.Error("Should find an even number")
+	}
+
+	value := result.Unwrap()
+	if value%2 != 0 {
+		t.Errorf("Found value should be even, got %d", value)
+	}
+
+	// Find number greater than 10 (should not exist)
+	result = set.Find(func(x int) bool { return x > 10 })
+	if result.IsSome() {
+		t.Error("Should not find number greater than 10")
+	}
+}
+
+func testSetGetAny(t *testing.T, factory func() setx.Set[int]) {
+	set := factory()
+
+	// Empty set
+	result := set.GetAny()
+	if result.IsSome() {
+		t.Error("Empty set should return None")
+	}
+
+	// Non-empty set
+	set.Add(42)
+	result = set.GetAny()
+	if result.IsNone() {
+		t.Error("Non-empty set should return Some")
+	}
+	if result.Unwrap() != 42 {
+		t.Errorf("Expected 42, got %d", result.Unwrap())
+	}
+}
+
+func testSetTryRemove(t *testing.T, factory func() setx.Set[int]) {
+	set := factory()
+	set.Add(1)
+	set.Add(2)
+	set.Add(3)
+
+	// Remove existing element
+	result := set.TryRemove(2)
+	if result.IsErr() {
+		t.Errorf("Should successfully remove existing element: %v", result.UnwrapErr())
+	}
+	if result.Unwrap() != 2 {
+		t.Errorf("Expected removed element to be 2, got %d", result.Unwrap())
+	}
+
+	if set.Contains(2) {
+		t.Error("Element 2 should be removed from set")
+	}
+
+	// Try to remove non-existing element
+	result = set.TryRemove(10)
+	if result.IsOk() {
+		t.Error("Should fail to remove non-existing element")
+	}
+}
+
+func testSetFilter(t *testing.T, factory func() setx.Set[int]) {
+	set := factory()
+	set.Add(1)
+	set.Add(2)
+	set.Add(3)
+	set.Add(4)
+	set.Add(5)
+
+	// Filter even numbers
+	evenSet := set.Filter(func(x int) bool { return x%2 == 0 })
+
+	if evenSet.Size() != 2 {
+		t.Errorf("Expected 2 even numbers, got %d", evenSet.Size())
+	}
+
+	if !evenSet.Contains(2) || !evenSet.Contains(4) {
+		t.Error("Even set should contain 2 and 4")
+	}
+
+	if evenSet.Contains(1) || evenSet.Contains(3) || evenSet.Contains(5) {
+		t.Error("Even set should not contain odd numbers")
+	}
+
+	// Filter with no matches
+	largeSet := set.Filter(func(x int) bool { return x > 10 })
+	if !largeSet.IsEmpty() {
+		t.Error("Filter with no matches should return empty set")
 	}
 }

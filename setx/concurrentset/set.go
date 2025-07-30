@@ -1,8 +1,11 @@
 package concurrentset
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 	"github.com/gosuda/stdx/setx"
 )
 
@@ -133,6 +136,51 @@ func (c *ConcurrentSet[T]) Union(other setx.Set[T]) setx.Set[T] {
 	// Add all elements from other set
 	other.ForEach(func(element T) {
 		result.Add(element)
+	})
+	return result
+}
+
+// Find implements setx.Set.
+func (c *ConcurrentSet[T]) Find(predicate func(T) bool) option.Option[T] {
+	var found option.Option[T] = option.None[T]()
+	c.elements.Range(func(key, value any) bool {
+		element := key.(T)
+		if predicate(element) {
+			found = option.Some(element)
+			return false // stop iteration
+		}
+		return true // continue iteration
+	})
+	return found
+}
+
+// GetAny implements setx.Set.
+func (c *ConcurrentSet[T]) GetAny() option.Option[T] {
+	var found option.Option[T] = option.None[T]()
+	c.elements.Range(func(key, value any) bool {
+		found = option.Some(key.(T))
+		return false // stop after first element
+	})
+	return found
+}
+
+// TryRemove implements setx.Set.
+func (c *ConcurrentSet[T]) TryRemove(element T) result.Result[T, error] {
+	if _, exists := c.elements.LoadAndDelete(element); exists {
+		return result.Ok[T, error](element)
+	}
+	return result.Err[T, error](errors.New("element not found in set"))
+}
+
+// Filter implements setx.Set.
+func (c *ConcurrentSet[T]) Filter(predicate func(T) bool) setx.Set[T] {
+	result := New[T]()
+	c.elements.Range(func(key, value any) bool {
+		element := key.(T)
+		if predicate(element) {
+			result.Add(element)
+		}
+		return true
 	})
 	return result
 }

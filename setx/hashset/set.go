@@ -1,6 +1,12 @@
 package hashset
 
-import "github.com/gosuda/stdx/setx"
+import (
+	"errors"
+
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
+	"github.com/gosuda/stdx/setx"
+)
 
 var _ setx.Set[int] = (*HashSet[int])(nil)
 
@@ -117,5 +123,43 @@ func (h *HashSet[T]) Union(other setx.Set[T]) setx.Set[T] {
 	other.ForEach(func(element T) {
 		result.Add(element)
 	})
+	return result
+}
+
+// Find implements setx.Set.
+func (h *HashSet[T]) Find(predicate func(T) bool) option.Option[T] {
+	for element := range h.elements {
+		if predicate(element) {
+			return option.Some(element)
+		}
+	}
+	return option.None[T]()
+}
+
+// GetAny implements setx.Set.
+func (h *HashSet[T]) GetAny() option.Option[T] {
+	for element := range h.elements {
+		return option.Some(element)
+	}
+	return option.None[T]()
+}
+
+// TryRemove implements setx.Set.
+func (h *HashSet[T]) TryRemove(element T) result.Result[T, error] {
+	if _, exists := h.elements[element]; exists {
+		delete(h.elements, element)
+		return result.Ok[T, error](element)
+	}
+	return result.Err[T, error](errors.New("element not found in set"))
+}
+
+// Filter implements setx.Set.
+func (h *HashSet[T]) Filter(predicate func(T) bool) setx.Set[T] {
+	result := New[T]()
+	for element := range h.elements {
+		if predicate(element) {
+			result.Add(element)
+		}
+	}
 	return result
 }
