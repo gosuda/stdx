@@ -5,6 +5,8 @@ import (
 	"reflect"
 
 	"github.com/gosuda/stdx/listx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ listx.List[int] = (*HashList[int])(nil)
@@ -51,18 +53,17 @@ func (h *HashList[T]) Insert(index int, element T) error {
 }
 
 // Get returns the element at the specified index.
-func (h *HashList[T]) Get(index int) (T, error) {
-	var zero T
+func (h *HashList[T]) Get(index int) option.Option[T] {
 	if index < 0 || index >= h.size {
-		return zero, errors.New("index out of bounds")
+		return option.None[T]()
 	}
 
 	element, exists := h.elements[index]
 	if !exists {
-		return zero, errors.New("element not found")
+		return option.None[T]()
 	}
 
-	return element, nil
+	return option.Some(element)
 }
 
 // Set sets the element at the specified index to a new value.
@@ -76,10 +77,9 @@ func (h *HashList[T]) Set(index int, element T) error {
 }
 
 // Remove removes the element at the specified index.
-func (h *HashList[T]) Remove(index int) (T, error) {
-	var zero T
+func (h *HashList[T]) Remove(index int) result.Result[T, error] {
 	if index < 0 || index >= h.size {
-		return zero, errors.New("index out of bounds")
+		return result.Err[T, error](errors.New("index out of bounds"))
 	}
 
 	removedElement := h.elements[index]
@@ -93,44 +93,47 @@ func (h *HashList[T]) Remove(index int) (T, error) {
 	delete(h.elements, h.size-1)
 	h.size--
 
-	return removedElement, nil
+	return result.Ok[T, error](removedElement)
 }
 
 // RemoveElement removes the first matching element.
 func (h *HashList[T]) RemoveElement(element T) bool {
-	index := h.IndexOf(element)
-	if index == -1 {
+	indexOpt := h.IndexOf(element)
+	if indexOpt.IsNone() {
 		return false
 	}
 
-	_, err := h.Remove(index)
-	return err == nil
+	result := h.Remove(indexOpt.Unwrap())
+	return result.IsOk()
 }
 
-// IndexOf returns the first index of the element.
-func (h *HashList[T]) IndexOf(element T) int {
+// IndexOf returns the first index of the element, or None if not found.
+func (h *HashList[T]) IndexOf(element T) option.Option[int] {
 	for i := 0; i < h.size; i++ {
 		if elem, exists := h.elements[i]; exists && reflect.DeepEqual(elem, element) {
-			return i
+			return option.Some(i)
 		}
 	}
-	return -1
+	return option.None[int]()
 }
 
-// LastIndexOf returns the last index of the element.
-func (h *HashList[T]) LastIndexOf(element T) int {
+// LastIndexOf returns the last index of the element, or None if not found.
+func (h *HashList[T]) LastIndexOf(element T) option.Option[int] {
 	lastIndex := -1
 	for i := 0; i < h.size; i++ {
 		if elem, exists := h.elements[i]; exists && reflect.DeepEqual(elem, element) {
 			lastIndex = i
 		}
 	}
-	return lastIndex
+	if lastIndex == -1 {
+		return option.None[int]()
+	}
+	return option.Some(lastIndex)
 }
 
 // Contains checks if the element is contained in the list.
 func (h *HashList[T]) Contains(element T) bool {
-	return h.IndexOf(element) != -1
+	return h.IndexOf(element).IsSome()
 }
 
 // Size returns the size of the list.

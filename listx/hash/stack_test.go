@@ -53,9 +53,9 @@ func testStackPush(t *testing.T, factory func() listx.Stack[int]) {
 		t.Errorf("Expected size 3, got %d", s.Size())
 	}
 
-	val, err := s.Peek()
-	if err != nil || val != 3 {
-		t.Errorf("Expected top element to be 3, got %d", val)
+	valOpt := s.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected top element to be 3, got %v", valOpt)
 	}
 }
 
@@ -65,23 +65,23 @@ func testStackPop(t *testing.T, factory func() listx.Stack[int]) {
 	s.Push(2)
 	s.Push(3)
 
-	val, err := s.Pop()
-	if err != nil || val != 3 {
-		t.Errorf("Expected Pop to return 3, got %d", val)
+	result := s.Pop()
+	if result.IsErr() || result.Unwrap() != 3 {
+		t.Errorf("Expected Pop to return 3, got %v", result)
 	}
 
 	if s.Size() != 2 {
 		t.Errorf("Expected size 2 after pop, got %d", s.Size())
 	}
 
-	val, err = s.Pop()
-	if err != nil || val != 2 {
-		t.Errorf("Expected Pop to return 2, got %d", val)
+	result = s.Pop()
+	if result.IsErr() || result.Unwrap() != 2 {
+		t.Errorf("Expected Pop to return 2, got %v", result)
 	}
 
-	val, err = s.Pop()
-	if err != nil || val != 1 {
-		t.Errorf("Expected Pop to return 1, got %d", val)
+	result = s.Pop()
+	if result.IsErr() || result.Unwrap() != 1 {
+		t.Errorf("Expected Pop to return 1, got %v", result)
 	}
 
 	if !s.IsEmpty() {
@@ -89,8 +89,8 @@ func testStackPop(t *testing.T, factory func() listx.Stack[int]) {
 	}
 
 	// Test empty stack
-	_, err = s.Pop()
-	if err == nil {
+	result = s.Pop()
+	if result.IsOk() {
 		t.Error("Pop on empty stack should return error")
 	}
 }
@@ -101,9 +101,9 @@ func testStackPeek(t *testing.T, factory func() listx.Stack[int]) {
 	s.Push(2)
 	s.Push(3)
 
-	val, err := s.Peek()
-	if err != nil || val != 3 {
-		t.Errorf("Expected Peek to return 3, got %d", val)
+	valOpt := s.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected Peek to return 3, got %v", valOpt)
 	}
 
 	// Size should not change
@@ -113,9 +113,9 @@ func testStackPeek(t *testing.T, factory func() listx.Stack[int]) {
 
 	// Test empty stack
 	s.Clear()
-	_, err = s.Peek()
-	if err == nil {
-		t.Error("Peek on empty stack should return error")
+	valOpt = s.Peek()
+	if valOpt.IsSome() {
+		t.Error("Peek on empty stack should return None")
 	}
 }
 

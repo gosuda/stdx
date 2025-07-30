@@ -53,9 +53,9 @@ func testQueueEnqueue(t *testing.T, factory func() listx.Queue[int]) {
 		t.Errorf("Expected size 3, got %d", q.Size())
 	}
 
-	val, err := q.Peek()
-	if err != nil || val != 1 {
-		t.Errorf("Expected front element to be 1, got %d", val)
+	valOpt := q.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 1 {
+		t.Errorf("Expected front element to be 1, got %v", valOpt)
 	}
 }
 
@@ -65,23 +65,23 @@ func testQueueDequeue(t *testing.T, factory func() listx.Queue[int]) {
 	q.Enqueue(2)
 	q.Enqueue(3)
 
-	val, err := q.Dequeue()
-	if err != nil || val != 1 {
-		t.Errorf("Expected Dequeue to return 1, got %d", val)
+	result := q.Dequeue()
+	if result.IsErr() || result.Unwrap() != 1 {
+		t.Errorf("Expected Dequeue to return 1, got %v", result)
 	}
 
 	if q.Size() != 2 {
 		t.Errorf("Expected size 2 after dequeue, got %d", q.Size())
 	}
 
-	val, err = q.Dequeue()
-	if err != nil || val != 2 {
-		t.Errorf("Expected Dequeue to return 2, got %d", val)
+	result = q.Dequeue()
+	if result.IsErr() || result.Unwrap() != 2 {
+		t.Errorf("Expected Dequeue to return 2, got %v", result)
 	}
 
-	val, err = q.Dequeue()
-	if err != nil || val != 3 {
-		t.Errorf("Expected Dequeue to return 3, got %d", val)
+	result = q.Dequeue()
+	if result.IsErr() || result.Unwrap() != 3 {
+		t.Errorf("Expected Dequeue to return 3, got %v", result)
 	}
 
 	if !q.IsEmpty() {
@@ -89,8 +89,8 @@ func testQueueDequeue(t *testing.T, factory func() listx.Queue[int]) {
 	}
 
 	// Test empty queue
-	_, err = q.Dequeue()
-	if err == nil {
+	result = q.Dequeue()
+	if result.IsOk() {
 		t.Error("Dequeue on empty queue should return error")
 	}
 }
@@ -101,9 +101,9 @@ func testQueuePeek(t *testing.T, factory func() listx.Queue[int]) {
 	q.Enqueue(2)
 	q.Enqueue(3)
 
-	val, err := q.Peek()
-	if err != nil || val != 1 {
-		t.Errorf("Expected Peek to return 1, got %d", val)
+	valOpt := q.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 1 {
+		t.Errorf("Expected Peek to return 1, got %v", valOpt)
 	}
 
 	// Size should not change
@@ -113,9 +113,9 @@ func testQueuePeek(t *testing.T, factory func() listx.Queue[int]) {
 
 	// Test empty queue
 	q.Clear()
-	_, err = q.Peek()
-	if err == nil {
-		t.Error("Peek on empty queue should return error")
+	valOpt = q.Peek()
+	if valOpt.IsSome() {
+		t.Error("Peek on empty queue should return None")
 	}
 }
 

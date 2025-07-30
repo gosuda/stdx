@@ -5,6 +5,8 @@ import (
 	"reflect"
 
 	"github.com/gosuda/stdx/listx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ listx.List[int] = (*SliceList[int])(nil)
@@ -50,12 +52,11 @@ func (s *SliceList[T]) Insert(index int, element T) error {
 }
 
 // Get returns the element at the specified index.
-func (s *SliceList[T]) Get(index int) (T, error) {
-	var zero T
+func (s *SliceList[T]) Get(index int) option.Option[T] {
 	if index < 0 || index >= len(s.elements) {
-		return zero, errors.New("index out of bounds")
+		return option.None[T]()
 	}
-	return s.elements[index], nil
+	return option.Some(s.elements[index])
 }
 
 // Set sets the element at the specified index to a new value.
@@ -68,10 +69,9 @@ func (s *SliceList[T]) Set(index int, element T) error {
 }
 
 // Remove removes the element at the specified index.
-func (s *SliceList[T]) Remove(index int) (T, error) {
-	var zero T
+func (s *SliceList[T]) Remove(index int) result.Result[T, error] {
 	if index < 0 || index >= len(s.elements) {
-		return zero, errors.New("index out of bounds")
+		return result.Err[T, error](errors.New("index out of bounds"))
 	}
 
 	removedElement := s.elements[index]
@@ -82,44 +82,47 @@ func (s *SliceList[T]) Remove(index int) (T, error) {
 	// Shrink slice
 	s.elements = s.elements[:len(s.elements)-1]
 
-	return removedElement, nil
+	return result.Ok[T, error](removedElement)
 }
 
 // RemoveElement removes the first matching element.
 func (s *SliceList[T]) RemoveElement(element T) bool {
-	index := s.IndexOf(element)
-	if index == -1 {
+	indexOpt := s.IndexOf(element)
+	if indexOpt.IsNone() {
 		return false
 	}
 
-	_, err := s.Remove(index)
-	return err == nil
+	result := s.Remove(indexOpt.Unwrap())
+	return result.IsOk()
 }
 
 // IndexOf returns the first index of the element.
-func (s *SliceList[T]) IndexOf(element T) int {
+func (s *SliceList[T]) IndexOf(element T) option.Option[int] {
 	for i, elem := range s.elements {
 		if reflect.DeepEqual(elem, element) {
-			return i
+			return option.Some(i)
 		}
 	}
-	return -1
+	return option.None[int]()
 }
 
-// LastIndexOf returns the last index of the element.
-func (s *SliceList[T]) LastIndexOf(element T) int {
+// LastIndexOf returns the last index of the element, or None if not found.
+func (s *SliceList[T]) LastIndexOf(element T) option.Option[int] {
 	lastIndex := -1
 	for i, elem := range s.elements {
 		if reflect.DeepEqual(elem, element) {
 			lastIndex = i
 		}
 	}
-	return lastIndex
+	if lastIndex == -1 {
+		return option.None[int]()
+	}
+	return option.Some(lastIndex)
 }
 
 // Contains checks if the element is contained in the list.
 func (s *SliceList[T]) Contains(element T) bool {
-	return s.IndexOf(element) != -1
+	return s.IndexOf(element).IsSome()
 }
 
 // Size returns the size of the list.

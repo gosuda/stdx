@@ -7,40 +7,40 @@ import (
 	"github.com/gosuda/stdx/listx/slices"
 )
 
-// createSliceStack is a factory function for creating SliceStack instances
-func createSliceStack[T any]() listx.Stack[T] {
+// createSlicesStack is a factory function for creating LinkedStack instances
+func createSlicesStack[T any]() listx.Stack[T] {
 	return slices.NewStack[T]()
 }
 
-func TestSliceStack_Push(t *testing.T) {
-	testStackPush(t, createSliceStack[int])
+func TestSlicesStack_Push(t *testing.T) {
+	testStackPush(t, createSlicesStack[int])
 }
 
-func TestSliceStack_Pop(t *testing.T) {
-	testStackPop(t, createSliceStack[int])
+func TestSlicesStack_Pop(t *testing.T) {
+	testStackPop(t, createSlicesStack[int])
 }
 
-func TestSliceStack_Peek(t *testing.T) {
-	testStackPeek(t, createSliceStack[int])
+func TestSlicesStack_Peek(t *testing.T) {
+	testStackPeek(t, createSlicesStack[int])
 }
 
-func TestSliceStack_Size(t *testing.T) {
-	testStackSize(t, createSliceStack[int])
+func TestSlicesStack_Size(t *testing.T) {
+	testStackSize(t, createSlicesStack[int])
 }
 
-func TestSliceStack_IsEmpty(t *testing.T) {
-	testStackIsEmpty(t, createSliceStack[int])
+func TestSlicesStack_IsEmpty(t *testing.T) {
+	testStackIsEmpty(t, createSlicesStack[int])
 }
 
-func TestSliceStack_Clear(t *testing.T) {
-	testStackClear(t, createSliceStack[int])
+func TestSlicesStack_Clear(t *testing.T) {
+	testStackClear(t, createSlicesStack[int])
 }
 
-func TestSliceStack_ToSlice(t *testing.T) {
-	testStackToSlice(t, createSliceStack[int])
+func TestSlicesStack_ToSlice(t *testing.T) {
+	testStackToSlice(t, createSlicesStack[int])
 }
 
-// Common test functions for Stack implementations (copied from linked package)
+// Common test functions for Stack implementations
 
 func testStackPush(t *testing.T, factory func() listx.Stack[int]) {
 	s := factory()
@@ -53,9 +53,9 @@ func testStackPush(t *testing.T, factory func() listx.Stack[int]) {
 		t.Errorf("Expected size 3, got %d", s.Size())
 	}
 
-	val, err := s.Peek()
-	if err != nil || val != 3 {
-		t.Errorf("Expected top element to be 3, got %d", val)
+	valOpt := s.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected top element to be 3, got %v", valOpt)
 	}
 }
 
@@ -65,23 +65,23 @@ func testStackPop(t *testing.T, factory func() listx.Stack[int]) {
 	s.Push(2)
 	s.Push(3)
 
-	val, err := s.Pop()
-	if err != nil || val != 3 {
-		t.Errorf("Expected Pop to return 3, got %d", val)
+	result := s.Pop()
+	if result.IsErr() || result.Unwrap() != 3 {
+		t.Errorf("Expected Pop to return 3, got %v", result)
 	}
 
 	if s.Size() != 2 {
 		t.Errorf("Expected size 2 after pop, got %d", s.Size())
 	}
 
-	val, err = s.Pop()
-	if err != nil || val != 2 {
-		t.Errorf("Expected Pop to return 2, got %d", val)
+	result = s.Pop()
+	if result.IsErr() || result.Unwrap() != 2 {
+		t.Errorf("Expected Pop to return 2, got %v", result)
 	}
 
-	val, err = s.Pop()
-	if err != nil || val != 1 {
-		t.Errorf("Expected Pop to return 1, got %d", val)
+	result = s.Pop()
+	if result.IsErr() || result.Unwrap() != 1 {
+		t.Errorf("Expected Pop to return 1, got %v", result)
 	}
 
 	if !s.IsEmpty() {
@@ -89,8 +89,8 @@ func testStackPop(t *testing.T, factory func() listx.Stack[int]) {
 	}
 
 	// Test empty stack
-	_, err = s.Pop()
-	if err == nil {
+	result = s.Pop()
+	if result.IsOk() {
 		t.Error("Pop on empty stack should return error")
 	}
 }
@@ -101,9 +101,9 @@ func testStackPeek(t *testing.T, factory func() listx.Stack[int]) {
 	s.Push(2)
 	s.Push(3)
 
-	val, err := s.Peek()
-	if err != nil || val != 3 {
-		t.Errorf("Expected Peek to return 3, got %d", val)
+	valOpt := s.Peek()
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected Peek to return 3, got %v", valOpt)
 	}
 
 	// Size should not change
@@ -113,9 +113,9 @@ func testStackPeek(t *testing.T, factory func() listx.Stack[int]) {
 
 	// Test empty stack
 	s.Clear()
-	_, err = s.Peek()
-	if err == nil {
-		t.Error("Peek on empty stack should return error")
+	valOpt = s.Peek()
+	if valOpt.IsSome() {
+		t.Error("Peek on empty stack should return None")
 	}
 }
 

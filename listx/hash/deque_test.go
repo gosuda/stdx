@@ -65,14 +65,14 @@ func testDequeAddFirst(t *testing.T, factory func() listx.Deque[int]) {
 		t.Errorf("Expected size 3, got %d", d.Size())
 	}
 
-	first, err := d.PeekFirst()
-	if err != nil || first != 3 {
-		t.Errorf("Expected first element to be 3, got %d", first)
+	firstOpt := d.PeekFirst()
+	if firstOpt.IsNone() || firstOpt.Unwrap() != 3 {
+		t.Errorf("Expected first element to be Some(3), got %v", firstOpt)
 	}
 
-	last, err := d.PeekLast()
-	if err != nil || last != 1 {
-		t.Errorf("Expected last element to be 1, got %d", last)
+	lastOpt := d.PeekLast()
+	if lastOpt.IsNone() || lastOpt.Unwrap() != 1 {
+		t.Errorf("Expected last element to be Some(1), got %v", lastOpt)
 	}
 }
 
@@ -87,14 +87,14 @@ func testDequeAddLast(t *testing.T, factory func() listx.Deque[int]) {
 		t.Errorf("Expected size 3, got %d", d.Size())
 	}
 
-	first, err := d.PeekFirst()
-	if err != nil || first != 1 {
-		t.Errorf("Expected first element to be 1, got %d", first)
+	firstOpt := d.PeekFirst()
+	if firstOpt.IsNone() || firstOpt.Unwrap() != 1 {
+		t.Errorf("Expected first element to be Some(1), got %v", firstOpt)
 	}
 
-	last, err := d.PeekLast()
-	if err != nil || last != 3 {
-		t.Errorf("Expected last element to be 3, got %d", last)
+	lastOpt := d.PeekLast()
+	if lastOpt.IsNone() || lastOpt.Unwrap() != 3 {
+		t.Errorf("Expected last element to be Some(3), got %v", lastOpt)
 	}
 }
 
@@ -104,25 +104,25 @@ func testDequeRemoveFirst(t *testing.T, factory func() listx.Deque[int]) {
 	d.AddLast(2)
 	d.AddLast(3)
 
-	val, err := d.RemoveFirst()
-	if err != nil || val != 1 {
-		t.Errorf("Expected RemoveFirst to return 1, got %d", val)
+	result := d.RemoveFirst()
+	if result.IsErr() || result.Unwrap() != 1 {
+		t.Errorf("Expected RemoveFirst to return Ok(1), got %v", result)
 	}
 
 	if d.Size() != 2 {
 		t.Errorf("Expected size 2 after RemoveFirst, got %d", d.Size())
 	}
 
-	first, err := d.PeekFirst()
-	if err != nil || first != 2 {
-		t.Errorf("Expected first element to be 2, got %d", first)
+	firstOpt := d.PeekFirst()
+	if firstOpt.IsNone() || firstOpt.Unwrap() != 2 {
+		t.Errorf("Expected first element to be Some(2), got %v", firstOpt)
 	}
 
 	// Test empty deque
 	d.Clear()
-	_, err = d.RemoveFirst()
-	if err == nil {
-		t.Error("RemoveFirst on empty deque should return error")
+	result = d.RemoveFirst()
+	if result.IsOk() {
+		t.Error("RemoveFirst on empty deque should return Err")
 	}
 }
 
@@ -132,25 +132,25 @@ func testDequeRemoveLast(t *testing.T, factory func() listx.Deque[int]) {
 	d.AddLast(2)
 	d.AddLast(3)
 
-	val, err := d.RemoveLast()
-	if err != nil || val != 3 {
-		t.Errorf("Expected RemoveLast to return 3, got %d", val)
+	result := d.RemoveLast()
+	if result.IsErr() || result.Unwrap() != 3 {
+		t.Errorf("Expected RemoveLast to return Ok(3), got %v", result)
 	}
 
 	if d.Size() != 2 {
 		t.Errorf("Expected size 2 after RemoveLast, got %d", d.Size())
 	}
 
-	last, err := d.PeekLast()
-	if err != nil || last != 2 {
-		t.Errorf("Expected last element to be 2, got %d", last)
+	lastOpt := d.PeekLast()
+	if lastOpt.IsNone() || lastOpt.Unwrap() != 2 {
+		t.Errorf("Expected last element to be Some(2), got %v", lastOpt)
 	}
 
 	// Test empty deque
 	d.Clear()
-	_, err = d.RemoveLast()
-	if err == nil {
-		t.Error("RemoveLast on empty deque should return error")
+	result = d.RemoveLast()
+	if result.IsOk() {
+		t.Error("RemoveLast on empty deque should return Err")
 	}
 }
 
@@ -160,9 +160,9 @@ func testDequePeekFirst(t *testing.T, factory func() listx.Deque[int]) {
 	d.AddLast(2)
 	d.AddLast(3)
 
-	val, err := d.PeekFirst()
-	if err != nil || val != 1 {
-		t.Errorf("Expected PeekFirst to return 1, got %d", val)
+	valOpt := d.PeekFirst()
+	if valOpt.IsNone() || valOpt.Unwrap() != 1 {
+		t.Errorf("Expected PeekFirst to return Some(1), got %v", valOpt)
 	}
 
 	// Size should not change
@@ -172,9 +172,9 @@ func testDequePeekFirst(t *testing.T, factory func() listx.Deque[int]) {
 
 	// Test empty deque
 	d.Clear()
-	_, err = d.PeekFirst()
-	if err == nil {
-		t.Error("PeekFirst on empty deque should return error")
+	valOpt = d.PeekFirst()
+	if valOpt.IsSome() {
+		t.Error("PeekFirst on empty deque should return None")
 	}
 }
 
@@ -184,9 +184,9 @@ func testDequePeekLast(t *testing.T, factory func() listx.Deque[int]) {
 	d.AddLast(2)
 	d.AddLast(3)
 
-	val, err := d.PeekLast()
-	if err != nil || val != 3 {
-		t.Errorf("Expected PeekLast to return 3, got %d", val)
+	valOpt := d.PeekLast()
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected PeekLast to return Some(3), got %v", valOpt)
 	}
 
 	// Size should not change
@@ -196,9 +196,9 @@ func testDequePeekLast(t *testing.T, factory func() listx.Deque[int]) {
 
 	// Test empty deque
 	d.Clear()
-	_, err = d.PeekLast()
-	if err == nil {
-		t.Error("PeekLast on empty deque should return error")
+	valOpt = d.PeekLast()
+	if valOpt.IsSome() {
+		t.Error("PeekLast on empty deque should return None")
 	}
 }
 

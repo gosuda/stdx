@@ -5,6 +5,8 @@ import (
 	"reflect"
 
 	"github.com/gosuda/stdx/listx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ listx.List[int] = (*LinkedList[int])(nil)
@@ -71,14 +73,13 @@ func (l *LinkedList[T]) Insert(index int, element T) error {
 }
 
 // Get returns the element at the specified index.
-func (l *LinkedList[T]) Get(index int) (T, error) {
-	var zero T
+func (l *LinkedList[T]) Get(index int) option.Option[T] {
 	if index < 0 || index >= l.size {
-		return zero, errors.New("index out of bounds")
+		return option.None[T]()
 	}
 
 	node := l.getNodeAt(index)
-	return node.Value, nil
+	return option.Some(node.Value)
 }
 
 // Set sets the element at the specified index to a new value.
@@ -93,10 +94,9 @@ func (l *LinkedList[T]) Set(index int, element T) error {
 }
 
 // Remove removes the element at the specified index.
-func (l *LinkedList[T]) Remove(index int) (T, error) {
-	var zero T
+func (l *LinkedList[T]) Remove(index int) result.Result[T, error] {
 	if index < 0 || index >= l.size {
-		return zero, errors.New("index out of bounds")
+		return result.Err[T, error](errors.New("index out of bounds"))
 	}
 
 	var removedValue T
@@ -117,7 +117,7 @@ func (l *LinkedList[T]) Remove(index int) (T, error) {
 	}
 
 	l.size--
-	return removedValue, nil
+	return result.Ok[T, error](removedValue)
 }
 
 // RemoveElement removes the first matching element.
@@ -152,19 +152,19 @@ func (l *LinkedList[T]) RemoveElement(element T) bool {
 }
 
 // IndexOf returns the first index of the element.
-func (l *LinkedList[T]) IndexOf(element T) int {
+func (l *LinkedList[T]) IndexOf(element T) option.Option[int] {
 	current := l.head
 	for i := 0; current != nil; i++ {
 		if reflect.DeepEqual(current.Value, element) {
-			return i
+			return option.Some(i)
 		}
 		current = current.Next
 	}
-	return -1
+	return option.None[int]()
 }
 
-// LastIndexOf returns the last index of the element.
-func (l *LinkedList[T]) LastIndexOf(element T) int {
+// LastIndexOf returns the last index of the element, or None if not found.
+func (l *LinkedList[T]) LastIndexOf(element T) option.Option[int] {
 	lastIndex := -1
 	current := l.head
 	for i := 0; current != nil; i++ {
@@ -173,12 +173,15 @@ func (l *LinkedList[T]) LastIndexOf(element T) int {
 		}
 		current = current.Next
 	}
-	return lastIndex
+	if lastIndex == -1 {
+		return option.None[int]()
+	}
+	return option.Some(lastIndex)
 }
 
 // Contains checks if the element is contained in the list.
 func (l *LinkedList[T]) Contains(element T) bool {
-	return l.IndexOf(element) != -1
+	return l.IndexOf(element).IsSome()
 }
 
 // Size returns the size of the list.

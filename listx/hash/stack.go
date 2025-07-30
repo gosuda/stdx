@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"github.com/gosuda/stdx/listx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ listx.Stack[int] = (*HashStack[int])(nil)
@@ -26,19 +28,17 @@ func (s *HashStack[T]) Push(element T) {
 }
 
 // Pop removes and returns the top element of the stack.
-func (s *HashStack[T]) Pop() (T, error) {
-	var zero T
+func (s *HashStack[T]) Pop() result.Result[T, error] {
 	if s.IsEmpty() {
-		return zero, errors.New("stack is empty")
+		return result.Err[T, error](errors.New("stack is empty"))
 	}
 	return s.list.Remove(s.list.Size() - 1) // Remove from end (top of stack)
 }
 
 // Peek returns the top element of the stack without removing it.
-func (s *HashStack[T]) Peek() (T, error) {
-	var zero T
+func (s *HashStack[T]) Peek() option.Option[T] {
 	if s.IsEmpty() {
-		return zero, errors.New("stack is empty")
+		return option.None[T]()
 	}
 	return s.list.Get(s.list.Size() - 1) // Get from end (top of stack)
 }

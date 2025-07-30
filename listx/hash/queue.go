@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"github.com/gosuda/stdx/listx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ listx.Queue[int] = (*HashQueue[int])(nil)
@@ -26,19 +28,17 @@ func (q *HashQueue[T]) Enqueue(element T) {
 }
 
 // Dequeue removes and returns the front element of the queue.
-func (q *HashQueue[T]) Dequeue() (T, error) {
-	var zero T
+func (q *HashQueue[T]) Dequeue() result.Result[T, error] {
 	if q.IsEmpty() {
-		return zero, errors.New("queue is empty")
+		return result.Err[T, error](errors.New("queue is empty"))
 	}
 	return q.list.Remove(0) // Remove from beginning (front of queue)
 }
 
 // Peek returns the front element of the queue without removing it.
-func (q *HashQueue[T]) Peek() (T, error) {
-	var zero T
+func (q *HashQueue[T]) Peek() option.Option[T] {
 	if q.IsEmpty() {
-		return zero, errors.New("queue is empty")
+		return option.None[T]()
 	}
 	return q.list.Get(0) // Get from beginning (front of queue)
 }

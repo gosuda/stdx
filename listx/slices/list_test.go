@@ -7,68 +7,68 @@ import (
 	"github.com/gosuda/stdx/listx/slices"
 )
 
-// createSliceList is a factory function for creating SliceList instances
-func createSliceList[T any]() listx.List[T] {
+// createSlicesList is a factory function for creating SlicesList instances
+func createSlicesList[T any]() listx.List[T] {
 	return slices.New[T]()
 }
 
-func TestSliceList_Add(t *testing.T) {
-	testListAdd(t, createSliceList[int])
+func TestSlicesList_Add(t *testing.T) {
+	testListAdd(t, createSlicesList[int])
 }
 
-func TestSliceList_Insert(t *testing.T) {
-	testListInsert(t, createSliceList[int])
+func TestSlicesList_Insert(t *testing.T) {
+	testListInsert(t, createSlicesList[int])
 }
 
-func TestSliceList_Get(t *testing.T) {
-	testListGet(t, createSliceList[int])
+func TestSlicesList_Get(t *testing.T) {
+	testListGet(t, createSlicesList[int])
 }
 
-func TestSliceList_Set(t *testing.T) {
-	testListSet(t, createSliceList[int])
+func TestSlicesList_Set(t *testing.T) {
+	testListSet(t, createSlicesList[int])
 }
 
-func TestSliceList_Remove(t *testing.T) {
-	testListRemove(t, createSliceList[int])
+func TestSlicesList_Remove(t *testing.T) {
+	testListRemove(t, createSlicesList[int])
 }
 
-func TestSliceList_RemoveElement(t *testing.T) {
-	testListRemoveElement(t, createSliceList[int])
+func TestSlicesList_RemoveElement(t *testing.T) {
+	testListRemoveElement(t, createSlicesList[int])
 }
 
-func TestSliceList_IndexOf(t *testing.T) {
-	testListIndexOf(t, createSliceList[int])
+func TestSlicesList_IndexOf(t *testing.T) {
+	testListIndexOf(t, createSlicesList[int])
 }
 
-func TestSliceList_LastIndexOf(t *testing.T) {
-	testListLastIndexOf(t, createSliceList[int])
+func TestSlicesList_LastIndexOf(t *testing.T) {
+	testListLastIndexOf(t, createSlicesList[int])
 }
 
-func TestSliceList_Contains(t *testing.T) {
-	testListContains(t, createSliceList[int])
+func TestSlicesList_Contains(t *testing.T) {
+	testListContains(t, createSlicesList[int])
 }
 
-func TestSliceList_Size(t *testing.T) {
-	testListSize(t, createSliceList[int])
+func TestSlicesList_Size(t *testing.T) {
+	testListSize(t, createSlicesList[int])
 }
 
-func TestSliceList_IsEmpty(t *testing.T) {
-	testListIsEmpty(t, createSliceList[int])
+func TestSlicesList_IsEmpty(t *testing.T) {
+	testListIsEmpty(t, createSlicesList[int])
 }
 
-func TestSliceList_Clear(t *testing.T) {
-	testListClear(t, createSliceList[int])
+func TestSlicesList_Clear(t *testing.T) {
+	testListClear(t, createSlicesList[int])
 }
 
-func TestSliceList_ToSlice(t *testing.T) {
-	testListToSlice(t, createSliceList[int])
+func TestSlicesList_ToSlice(t *testing.T) {
+	testListToSlice(t, createSlicesList[int])
 }
 
-func TestSliceList_ForEach(t *testing.T) {
-	testListForEach(t, createSliceList[int])
+func TestSlicesList_ForEach(t *testing.T) {
+	testListForEach(t, createSlicesList[int])
 }
 
-// Common test functions (copied from linked package)
+// Common test functions that can be reused for any List implementation
 
 func testListAdd(t *testing.T, factory func() listx.List[int]) {
 	l := factory()
@@ -81,14 +81,14 @@ func testListAdd(t *testing.T, factory func() listx.List[int]) {
 		t.Errorf("Expected size 3, got %d", l.Size())
 	}
 
-	val, err := l.Get(0)
-	if err != nil || val != 1 {
-		t.Errorf("Expected first element to be 1, got %d", val)
+	valOpt := l.Get(0)
+	if valOpt.IsNone() || valOpt.Unwrap() != 1 {
+		t.Errorf("Expected first element to be 1, got %v", valOpt)
 	}
 
-	val, err = l.Get(2)
-	if err != nil || val != 3 {
-		t.Errorf("Expected third element to be 3, got %d", val)
+	valOpt = l.Get(2)
+	if valOpt.IsNone() || valOpt.Unwrap() != 3 {
+		t.Errorf("Expected third element to be 3, got %v", valOpt)
 	}
 }
 
@@ -145,20 +145,20 @@ func testListGet(t *testing.T, factory func() listx.List[int]) {
 	l.Add(20)
 	l.Add(30)
 
-	val, err := l.Get(1)
-	if err != nil || val != 20 {
-		t.Errorf("Expected Get(1) to return 20, got %d", val)
+	valOpt := l.Get(1)
+	if valOpt.IsNone() || valOpt.Unwrap() != 20 {
+		t.Errorf("Expected Get(1) to return 20, got %v", valOpt)
 	}
 
 	// Test out of bounds
-	_, err = l.Get(-1)
-	if err == nil {
-		t.Error("Get with negative index should fail")
+	valOpt = l.Get(-1)
+	if valOpt.IsSome() {
+		t.Error("Get with negative index should return None")
 	}
 
-	_, err = l.Get(3)
-	if err == nil {
-		t.Error("Get with too large index should fail")
+	valOpt = l.Get(3)
+	if valOpt.IsSome() {
+		t.Error("Get with too large index should return None")
 	}
 }
 
@@ -173,9 +173,9 @@ func testListSet(t *testing.T, factory func() listx.List[int]) {
 		t.Errorf("Set failed: %v", err)
 	}
 
-	val, _ := l.Get(1)
-	if val != 99 {
-		t.Errorf("Expected Set to change value to 99, got %d", val)
+	valOpt := l.Get(1)
+	if valOpt.IsNone() || valOpt.Unwrap() != 99 {
+		t.Errorf("Expected Set to change value to 99, got %v", valOpt)
 	}
 
 	// Test out of bounds
@@ -197,9 +197,9 @@ func testListRemove(t *testing.T, factory func() listx.List[int]) {
 	l.Add(30)
 
 	// Remove from middle
-	val, err := l.Remove(1)
-	if err != nil || val != 20 {
-		t.Errorf("Expected Remove(1) to return 20, got %d", val)
+	result := l.Remove(1)
+	if result.IsErr() || result.Unwrap() != 20 {
+		t.Errorf("Expected Remove(1) to return 20, got %v", result)
 	}
 
 	if l.Size() != 2 {
@@ -207,25 +207,25 @@ func testListRemove(t *testing.T, factory func() listx.List[int]) {
 	}
 
 	// Verify remaining elements
-	val, _ = l.Get(0)
-	if val != 10 {
-		t.Errorf("Expected first element to be 10, got %d", val)
+	valOpt := l.Get(0)
+	if valOpt.IsNone() || valOpt.Unwrap() != 10 {
+		t.Errorf("Expected first element to be 10, got %v", valOpt)
 	}
 
-	val, _ = l.Get(1)
-	if val != 30 {
-		t.Errorf("Expected second element to be 30, got %d", val)
+	valOpt = l.Get(1)
+	if valOpt.IsNone() || valOpt.Unwrap() != 30 {
+		t.Errorf("Expected second element to be 30, got %v", valOpt)
 	}
 
 	// Test out of bounds
-	_, err = l.Remove(-1)
-	if err == nil {
-		t.Error("Remove with negative index should fail")
+	result = l.Remove(-1)
+	if result.IsOk() {
+		t.Error("Remove with negative index should return error")
 	}
 
-	_, err = l.Remove(2)
-	if err == nil {
-		t.Error("Remove with too large index should fail")
+	result = l.Remove(2)
+	if result.IsOk() {
+		t.Error("Remove with too large index should return error")
 	}
 }
 
@@ -246,9 +246,9 @@ func testListRemoveElement(t *testing.T, factory func() listx.List[int]) {
 	}
 
 	// Verify first occurrence was removed
-	val, _ := l.Get(0)
-	if val != 20 {
-		t.Errorf("Expected first element to be 20, got %d", val)
+	valOpt := l.Get(0)
+	if valOpt.IsNone() || valOpt.Unwrap() != 20 {
+		t.Errorf("Expected first element to be 20, got %v", valOpt)
 	}
 
 	// Remove non-existing element
@@ -264,19 +264,19 @@ func testListIndexOf(t *testing.T, factory func() listx.List[int]) {
 	l.Add(20)
 	l.Add(10)
 
-	index := l.IndexOf(10)
-	if index != 0 {
-		t.Errorf("Expected IndexOf(10) to return 0, got %d", index)
+	indexOpt := l.IndexOf(10)
+	if indexOpt.IsNone() || indexOpt.Unwrap() != 0 {
+		t.Errorf("Expected IndexOf(10) to return 0, got %v", indexOpt)
 	}
 
-	index = l.IndexOf(20)
-	if index != 1 {
-		t.Errorf("Expected IndexOf(20) to return 1, got %d", index)
+	indexOpt = l.IndexOf(20)
+	if indexOpt.IsNone() || indexOpt.Unwrap() != 1 {
+		t.Errorf("Expected IndexOf(20) to return 1, got %v", indexOpt)
 	}
 
-	index = l.IndexOf(99)
-	if index != -1 {
-		t.Errorf("Expected IndexOf(99) to return -1, got %d", index)
+	indexOpt = l.IndexOf(99)
+	if indexOpt.IsSome() {
+		t.Error("IndexOf non-existing element should return None")
 	}
 }
 
@@ -286,19 +286,19 @@ func testListLastIndexOf(t *testing.T, factory func() listx.List[int]) {
 	l.Add(20)
 	l.Add(10)
 
-	index := l.LastIndexOf(10)
-	if index != 2 {
-		t.Errorf("Expected LastIndexOf(10) to return 2, got %d", index)
+	indexOpt := l.LastIndexOf(10)
+	if indexOpt.IsNone() || indexOpt.Unwrap() != 2 {
+		t.Errorf("Expected LastIndexOf(10) to return 2, got %v", indexOpt)
 	}
 
-	index = l.LastIndexOf(20)
-	if index != 1 {
-		t.Errorf("Expected LastIndexOf(20) to return 1, got %d", index)
+	indexOpt = l.LastIndexOf(20)
+	if indexOpt.IsNone() || indexOpt.Unwrap() != 1 {
+		t.Errorf("Expected LastIndexOf(20) to return 1, got %v", indexOpt)
 	}
 
-	index = l.LastIndexOf(99)
-	if index != -1 {
-		t.Errorf("Expected LastIndexOf(99) to return -1, got %d", index)
+	indexOpt = l.LastIndexOf(99)
+	if indexOpt.IsSome() {
+		t.Error("LastIndexOf non-existing element should return None")
 	}
 }
 
