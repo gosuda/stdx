@@ -1,117 +1,117 @@
 package lists
 
-// List 인터페이스는 순서가 있는 컬렉션의 기본 연산을 정의합니다.
+// List interface defines basic operations for ordered collections.
 type List[T any] interface {
-	// Add는 리스트의 끝에 요소를 추가합니다.
+	// Add appends an element to the end of the list.
 	Add(element T)
 
-	// Insert는 지정된 인덱스에 요소를 삽입합니다.
+	// Insert inserts an element at the specified index.
 	Insert(index int, element T) error
 
-	// Get은 지정된 인덱스의 요소를 반환합니다.
+	// Get returns the element at the specified index.
 	Get(index int) (T, error)
 
-	// Set은 지정된 인덱스의 요소를 새 값으로 설정합니다.
+	// Set sets the element at the specified index to a new value.
 	Set(index int, element T) error
 
-	// Remove는 지정된 인덱스의 요소를 제거합니다.
+	// Remove removes the element at the specified index.
 	Remove(index int) (T, error)
 
-	// RemoveElement는 첫 번째로 일치하는 요소를 제거합니다.
+	// RemoveElement removes the first matching element.
 	RemoveElement(element T) bool
 
-	// IndexOf는 요소의 첫 번째 인덱스를 반환합니다.
+	// IndexOf returns the first index of the element.
 	IndexOf(element T) int
 
-	// LastIndexOf는 요소의 마지막 인덱스를 반환합니다.
+	// LastIndexOf returns the last index of the element.
 	LastIndexOf(element T) int
 
-	// Contains는 요소가 리스트에 포함되어 있는지 확인합니다.
+	// Contains checks if the element is contained in the list.
 	Contains(element T) bool
 
-	// Size는 리스트의 크기를 반환합니다.
+	// Size returns the size of the list.
 	Size() int
 
-	// IsEmpty는 리스트가 비어있는지 확인합니다.
+	// IsEmpty checks if the list is empty.
 	IsEmpty() bool
 
-	// Clear는 리스트의 모든 요소를 제거합니다.
+	// Clear removes all elements from the list.
 	Clear()
 
-	// ToSlice는 리스트의 모든 요소를 슬라이스로 반환합니다.
+	// ToSlice returns all elements of the list as a slice.
 	ToSlice() []T
 
-	// ForEach는 리스트의 모든 요소에 대해 함수를 실행합니다.
+	// ForEach executes a function for every element in the list.
 	ForEach(fn func(element T))
 }
 
-// Deque 인터페이스는 양방향 큐의 연산을 정의합니다.
+// Deque interface defines operations for double-ended queue.
 type Deque[T any] interface {
 	List[T]
 
-	// AddFirst는 데크의 앞쪽에 요소를 추가합니다.
+	// AddFirst adds an element to the front of the deque.
 	AddFirst(element T)
 
-	// AddLast는 데크의 뒤쪽에 요소를 추가합니다.
+	// AddLast adds an element to the back of the deque.
 	AddLast(element T)
 
-	// RemoveFirst는 데크의 첫 번째 요소를 제거하고 반환합니다.
+	// RemoveFirst removes and returns the first element of the deque.
 	RemoveFirst() (T, error)
 
-	// RemoveLast는 데크의 마지막 요소를 제거하고 반환합니다.
+	// RemoveLast removes and returns the last element of the deque.
 	RemoveLast() (T, error)
 
-	// PeekFirst는 데크의 첫 번째 요소를 제거하지 않고 반환합니다.
+	// PeekFirst returns the first element of the deque without removing it.
 	PeekFirst() (T, error)
 
-	// PeekLast는 데크의 마지막 요소를 제거하지 않고 반환합니다.
+	// PeekLast returns the last element of the deque without removing it.
 	PeekLast() (T, error)
 }
 
-// Stack 인터페이스는 스택(LIFO)의 연산을 정의합니다.
+// Stack interface defines operations for stack (LIFO) data structure.
 type Stack[T any] interface {
-	// Push는 스택의 맨 위에 요소를 추가합니다.
+	// Push adds an element to the top of the stack.
 	Push(element T)
 
-	// Pop은 스택의 맨 위 요소를 제거하고 반환합니다.
+	// Pop removes and returns the top element of the stack.
 	Pop() (T, error)
 
-	// Peek는 스택의 맨 위 요소를 제거하지 않고 반환합니다.
+	// Peek returns the top element of the stack without removing it.
 	Peek() (T, error)
 
-	// Size는 스택의 크기를 반환합니다.
+	// Size returns the size of the stack.
 	Size() int
 
-	// IsEmpty는 스택이 비어있는지 확인합니다.
+	// IsEmpty checks if the stack is empty.
 	IsEmpty() bool
 
-	// Clear는 스택의 모든 요소를 제거합니다.
+	// Clear removes all elements from the stack.
 	Clear()
 
-	// ToSlice는 스택의 모든 요소를 슬라이스로 반환합니다 (맨 위부터).
+	// ToSlice returns all elements of the stack as a slice (from top to bottom).
 	ToSlice() []T
 }
 
-// Queue 인터페이스는 큐(FIFO)의 연산을 정의합니다.
+// Queue interface defines operations for queue (FIFO) data structure.
 type Queue[T any] interface {
-	// Enqueue는 큐의 뒤쪽에 요소를 추가합니다.
+	// Enqueue adds an element to the back of the queue.
 	Enqueue(element T)
 
-	// Dequeue는 큐의 앞쪽 요소를 제거하고 반환합니다.
+	// Dequeue removes and returns the front element of the queue.
 	Dequeue() (T, error)
 
-	// Peek는 큐의 앞쪽 요소를 제거하지 않고 반환합니다.
+	// Peek returns the front element of the queue without removing it.
 	Peek() (T, error)
 
-	// Size는 큐의 크기를 반환합니다.
+	// Size returns the size of the queue.
 	Size() int
 
-	// IsEmpty는 큐가 비어있는지 확인합니다.
+	// IsEmpty checks if the queue is empty.
 	IsEmpty() bool
 
-	// Clear는 큐의 모든 요소를 제거합니다.
+	// Clear removes all elements from the queue.
 	Clear()
 
-	// ToSlice는 큐의 모든 요소를 슬라이스로 반환합니다 (앞쪽부터).
+	// ToSlice returns all elements of the queue as a slice (from front to back).
 	ToSlice() []T
 }
