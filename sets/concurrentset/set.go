@@ -24,10 +24,7 @@ func (c *ConcurrentSet[T]) Add(element T) bool {
 
 // Clear implements sets.Set.
 func (c *ConcurrentSet[T]) Clear() {
-	c.elements.Range(func(key, value any) bool {
-		c.elements.Delete(key)
-		return true
-	})
+	c.elements.Clear()
 }
 
 // Contains implements sets.Set.
