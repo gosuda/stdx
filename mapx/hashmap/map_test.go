@@ -60,33 +60,42 @@ func TestHashMap_ForEach(t *testing.T) {
 	testMapForEach(t, createHashMap[string, int])
 }
 
+func TestHashMap_FindKey(t *testing.T) {
+	testMapFindKey(t, createHashMap[string, int])
+}
+
+func TestHashMap_FindEntry(t *testing.T) {
+	testMapFindEntry(t, createHashMap[string, int])
+}
+
+func TestHashMap_Filter(t *testing.T) {
+	testMapFilter(t, createHashMap[string, int])
+}
+
 // Common test functions that can be reused for any Map implementation
 
 func testMapPut(t *testing.T, factory func() mapx.Map[string, int]) {
 	m := factory()
 
 	// Test putting new key-value pair
-	prev, exists := m.Put("key1", 100)
-	if exists {
-		t.Error("Put should return false for new key")
-	}
-	if prev != 0 {
-		t.Errorf("Previous value should be zero value, got %d", prev)
+	result := m.Put("key1", 100)
+	if result.IsSome() {
+		t.Error("Put should return None for new key")
 	}
 
 	// Test updating existing key
-	prev, exists = m.Put("key1", 200)
-	if !exists {
-		t.Error("Put should return true for existing key")
+	result = m.Put("key1", 200)
+	if result.IsNone() {
+		t.Error("Put should return Some for existing key")
 	}
-	if prev != 100 {
-		t.Errorf("Previous value should be 100, got %d", prev)
+	if result.Unwrap() != 100 {
+		t.Errorf("Previous value should be 100, got %d", result.Unwrap())
 	}
 
 	// Verify the value was updated
-	val, found := m.Get("key1")
-	if !found || val != 200 {
-		t.Errorf("Expected value 200, got %d", val)
+	getResult := m.Get("key1")
+	if getResult.IsNone() || getResult.Unwrap() != 200 {
+		t.Errorf("Expected value 200, got %d", getResult.UnwrapOr(0))
 	}
 }
 
@@ -96,21 +105,18 @@ func testMapGet(t *testing.T, factory func() mapx.Map[string, int]) {
 	m.Put("key2", 200)
 
 	// Test getting existing key
-	val, exists := m.Get("key1")
-	if !exists {
-		t.Error("Get should return true for existing key")
+	result := m.Get("key1")
+	if result.IsNone() {
+		t.Error("Get should return Some for existing key")
 	}
-	if val != 100 {
-		t.Errorf("Expected value 100, got %d", val)
+	if result.Unwrap() != 100 {
+		t.Errorf("Expected value 100, got %d", result.Unwrap())
 	}
 
 	// Test getting non-existing key
-	val, exists = m.Get("key3")
-	if exists {
-		t.Error("Get should return false for non-existing key")
-	}
-	if val != 0 {
-		t.Errorf("Value should be zero value for non-existing key, got %d", val)
+	result = m.Get("key3")
+	if result.IsSome() {
+		t.Error("Get should return None for non-existing key")
 	}
 }
 
@@ -120,27 +126,24 @@ func testMapRemove(t *testing.T, factory func() mapx.Map[string, int]) {
 	m.Put("key2", 200)
 
 	// Test removing existing key
-	val, removed := m.Remove("key1")
-	if !removed {
-		t.Error("Remove should return true for existing key")
+	result := m.Remove("key1")
+	if result.IsErr() {
+		t.Errorf("Remove should succeed for existing key: %v", result.UnwrapErr())
 	}
-	if val != 100 {
-		t.Errorf("Removed value should be 100, got %d", val)
+	if result.Unwrap() != 100 {
+		t.Errorf("Removed value should be 100, got %d", result.Unwrap())
 	}
 
 	// Verify key was removed
-	_, exists := m.Get("key1")
-	if exists {
+	getResult := m.Get("key1")
+	if getResult.IsSome() {
 		t.Error("Key should not exist after removal")
 	}
 
 	// Test removing non-existing key
-	val, removed = m.Remove("key3")
-	if removed {
-		t.Error("Remove should return false for non-existing key")
-	}
-	if val != 0 {
-		t.Errorf("Value should be zero value for non-existing key, got %d", val)
+	result = m.Remove("key3")
+	if result.IsOk() {
+		t.Error("Remove should fail for non-existing key")
 	}
 
 	// Test size after removal
@@ -328,5 +331,84 @@ func testMapForEach(t *testing.T, factory func() mapx.Map[string, int]) {
 
 	if visited["key1"] != 100 || visited["key2"] != 200 || visited["key3"] != 300 {
 		t.Error("ForEach should visit all key-value pairs")
+	}
+}
+
+// Test functions for new Option/Result-based methods
+
+func testMapFindKey(t *testing.T, factory func() mapx.Map[string, int]) {
+	m := factory()
+	m.Put("key1", 100)
+	m.Put("key2", 200)
+	m.Put("key3", 100) // duplicate value
+
+	// Find existing value
+	result := m.FindKey(100)
+	if result.IsNone() {
+		t.Error("Should find a key for existing value")
+	}
+
+	foundKey := result.Unwrap()
+	if foundKey != "key1" && foundKey != "key3" {
+		t.Errorf("Found key should be 'key1' or 'key3', got %s", foundKey)
+	}
+
+	// Find non-existing value
+	result = m.FindKey(999)
+	if result.IsSome() {
+		t.Error("Should not find key for non-existing value")
+	}
+}
+
+func testMapFindEntry(t *testing.T, factory func() mapx.Map[string, int]) {
+	m := factory()
+	m.Put("key1", 100)
+	m.Put("key2", 200)
+	m.Put("key3", 300)
+
+	// Find entry where value > 150
+	result := m.FindEntry(func(k string, v int) bool { return v > 150 })
+	if result.IsNone() {
+		t.Error("Should find an entry with value > 150")
+	}
+
+	entry := result.Unwrap()
+	if entry.Value <= 150 {
+		t.Errorf("Found entry value should be > 150, got %d", entry.Value)
+	}
+
+	// Find entry that doesn't exist
+	result = m.FindEntry(func(k string, v int) bool { return v > 500 })
+	if result.IsSome() {
+		t.Error("Should not find entry with value > 500")
+	}
+}
+
+func testMapFilter(t *testing.T, factory func() mapx.Map[string, int]) {
+	m := factory()
+	m.Put("key1", 100)
+	m.Put("key2", 200)
+	m.Put("key3", 300)
+	m.Put("key4", 400)
+
+	// Filter entries with even values
+	evenMap := m.Filter(func(k string, v int) bool { return v%200 == 0 })
+
+	if evenMap.Size() != 2 {
+		t.Errorf("Expected 2 entries with even hundreds, got %d", evenMap.Size())
+	}
+
+	if !evenMap.ContainsKey("key2") || !evenMap.ContainsKey("key4") {
+		t.Error("Filtered map should contain key2 and key4")
+	}
+
+	if evenMap.ContainsKey("key1") || evenMap.ContainsKey("key3") {
+		t.Error("Filtered map should not contain key1 or key3")
+	}
+
+	// Filter with no matches
+	emptyMap := m.Filter(func(k string, v int) bool { return v > 1000 })
+	if !emptyMap.IsEmpty() {
+		t.Error("Filter with no matches should return empty map")
 	}
 }

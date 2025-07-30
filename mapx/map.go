@@ -1,15 +1,20 @@
 package mapx
 
+import (
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
+)
+
 // Map interface defines basic operations for key-value pair storage data structures.
 type Map[K comparable, V any] interface {
-	// Put stores a key-value pair in the map. If the key already exists, it updates the value and returns the previous value.
-	Put(key K, value V) (previousValue V, exists bool)
+	// Put stores a key-value pair in the map. Returns Some(previousValue) if key existed, None otherwise.
+	Put(key K, value V) option.Option[V]
 
-	// Get returns the value corresponding to the key.
-	Get(key K) (value V, exists bool)
+	// Get returns Some(value) if key exists, None otherwise.
+	Get(key K) option.Option[V]
 
-	// Remove removes the entry corresponding to the key.
-	Remove(key K) (value V, exists bool)
+	// Remove removes the entry corresponding to the key. Returns Ok(removedValue) if successful, Err if key not found.
+	Remove(key K) result.Result[V, error]
 
 	// ContainsKey checks if the key exists in the map.
 	ContainsKey(key K) bool
@@ -37,6 +42,15 @@ type Map[K comparable, V any] interface {
 
 	// ForEach executes a function for every key-value pair in the map.
 	ForEach(fn func(key K, value V))
+
+	// FindKey returns the first key that maps to the given value, or None if not found.
+	FindKey(value V) option.Option[K]
+
+	// FindEntry returns the first entry that matches the predicate, or None if not found.
+	FindEntry(predicate func(K, V) bool) option.Option[Entry[K, V]]
+
+	// Filter returns a new map containing only entries that match the predicate.
+	Filter(predicate func(K, V) bool) Map[K, V]
 }
 
 // Entry represents a key-value pair.

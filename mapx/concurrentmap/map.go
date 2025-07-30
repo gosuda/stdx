@@ -1,10 +1,13 @@
 package concurrentmap
 
 import (
+	"errors"
 	"reflect"
 	"sync"
 
 	"github.com/gosuda/stdx/mapx"
+	"github.com/gosuda/stdx/option"
+	"github.com/gosuda/stdx/result"
 )
 
 var _ mapx.Map[int, string] = (*ConcurrentMap[int, string])(nil)
@@ -63,12 +66,11 @@ func (c *ConcurrentMap[K, V]) ForEach(fn func(key K, value V)) {
 }
 
 // Get implements mapx.Map.
-func (c *ConcurrentMap[K, V]) Get(key K) (value V, exists bool) {
-	val, exists := c.elements.Load(key)
-	if exists {
-		value = val.(V)
+func (c *ConcurrentMap[K, V]) Get(key K) option.Option[V] {
+	if val, exists := c.elements.Load(key); exists {
+		return option.Some(val.(V))
 	}
-	return
+	return option.None[V]()
 }
 
 // IsEmpty implements mapx.Map.
@@ -92,24 +94,22 @@ func (c *ConcurrentMap[K, V]) Keys() []K {
 }
 
 // Put implements mapx.Map.
-func (c *ConcurrentMap[K, V]) Put(key K, value V) (previousValue V, exists bool) {
-	val, loaded := c.elements.LoadOrStore(key, value)
-	if loaded {
-		previousValue = val.(V)
-		exists = true
-		c.elements.Store(key, value) // Update with new value
+func (c *ConcurrentMap[K, V]) Put(key K, value V) option.Option[V] {
+	if val, loaded := c.elements.LoadOrStore(key, value); loaded {
+		// Key existed, update with new value and return previous value
+		c.elements.Store(key, value)
+		return option.Some(val.(V))
 	}
-	return
+	// Key didn't exist, new entry created
+	return option.None[V]()
 }
 
 // Remove implements mapx.Map.
-func (c *ConcurrentMap[K, V]) Remove(key K) (value V, exists bool) {
-	val, loaded := c.elements.LoadAndDelete(key)
-	if loaded {
-		value = val.(V)
-		exists = true
+func (c *ConcurrentMap[K, V]) Remove(key K) result.Result[V, error] {
+	if val, loaded := c.elements.LoadAndDelete(key); loaded {
+		return result.Ok[V, error](val.(V))
 	}
-	return
+	return result.Err[V, error](errors.New("key not found"))
 }
 
 // Size implements mapx.Map.
@@ -127,6 +127,48 @@ func (c *ConcurrentMap[K, V]) Values() []V {
 	var result []V
 	c.elements.Range(func(key, value any) bool {
 		result = append(result, value.(V))
+		return true
+	})
+	return result
+}
+
+// FindKey implements mapx.Map.
+func (c *ConcurrentMap[K, V]) FindKey(value V) option.Option[K] {
+	var found option.Option[K] = option.None[K]()
+	c.elements.Range(func(key, val any) bool {
+		if reflect.DeepEqual(val.(V), value) {
+			found = option.Some(key.(K))
+			return false // stop iteration
+		}
+		return true
+	})
+	return found
+}
+
+// FindEntry implements mapx.Map.
+func (c *ConcurrentMap[K, V]) FindEntry(predicate func(K, V) bool) option.Option[mapx.Entry[K, V]] {
+	var found option.Option[mapx.Entry[K, V]] = option.None[mapx.Entry[K, V]]()
+	c.elements.Range(func(key, val any) bool {
+		k := key.(K)
+		v := val.(V)
+		if predicate(k, v) {
+			found = option.Some(mapx.Entry[K, V]{Key: k, Value: v})
+			return false // stop iteration
+		}
+		return true
+	})
+	return found
+}
+
+// Filter implements mapx.Map.
+func (c *ConcurrentMap[K, V]) Filter(predicate func(K, V) bool) mapx.Map[K, V] {
+	result := New[K, V]()
+	c.elements.Range(func(key, val any) bool {
+		k := key.(K)
+		v := val.(V)
+		if predicate(k, v) {
+			result.Put(k, v)
+		}
 		return true
 	})
 	return result
